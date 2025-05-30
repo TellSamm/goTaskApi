@@ -9,10 +9,6 @@ import (
 
 var task string
 
-//type TaskRequest struct {
-//	Task string `json:"task"`
-//}
-
 func getTask(с echo.Context) error {
 	return с.String(http.StatusOK, fmt.Sprintf("Hello, %v!", task))
 }
