@@ -29,5 +29,5 @@ func main() {
 	e := echo.New()
 	e.GET("/", getTask)
 	e.POST("/", postTask)
-	e.Logger.Fatal(e.Start(":8080"))
+	e.Start(":8080")
 }
