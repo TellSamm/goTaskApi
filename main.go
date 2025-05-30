@@ -17,8 +17,11 @@ func postTask(c echo.Context) error {
 	var requestBody struct {
 		Task string `json:"task"`
 	}
-	if err := json.NewDecoder(c.Request().Body).Decode(&requestBody); err != nil {
-		return c.String(http.StatusBadRequest, "Неверный JSON")
+	decoder := json.NewDecoder(c.Request().Body)
+	decoder.DisallowUnknownFields()
+
+	if err := decoder.Decode(&requestBody); err != nil {
+		return c.String(http.StatusBadRequest, "Неверный JSON: "+err.Error())
 	}
 
 	task = requestBody.Task
@@ -27,7 +30,7 @@ func postTask(c echo.Context) error {
 
 func main() {
 	e := echo.New()
-	e.GET("/", getTask)
-	e.POST("/", postTask)
+	e.GET("/task", getTask)
+	e.POST("/task", postTask)
 	e.Start(":8080")
 }
