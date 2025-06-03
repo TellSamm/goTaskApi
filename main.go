@@ -3,19 +3,27 @@ package main
 import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"log"
 	"net/http"
 )
 
 type Task struct {
-	ID     string `json:"id"`
-	Title  string `json:"title"`
-	Status string `json:"status"`
+	ID        string         `json:"id" gorm:"primaryKey"`
+	Title     string         `json:"title"`
+	Status    string         `json:"status"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
-var tasks = []Task{}
+var db *gorm.DB // глобальная переменная для доступа к БД
 
 func getTask(c echo.Context) error {
-	return c.JSON(http.StatusOK, tasks)
+	var taskList []Task
+	if err := db.Find(&taskList).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Ошибка получения задач из БД"})
+	}
+	return c.JSON(http.StatusOK, taskList)
 }
 
 func postTask(c echo.Context) error {
@@ -23,16 +31,16 @@ func postTask(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Неверный JSON"})
 	}
-	newTask := Task{
-		ID:     uuid.NewString(),
-		Title:  req.Title,
-		Status: req.Status,
+	req.ID = uuid.New().String()
+
+	if err := db.Create(&req).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Не удалось сохранить задачу в базу данных"})
 	}
-	tasks = append(tasks, newTask)
-	return c.JSON(http.StatusCreated, newTask)
+	return c.JSON(http.StatusCreated, req)
 }
 
 func patchTask(c echo.Context) error {
+
 	id := c.Param("id")
 	var req struct {
 		Title  *string `json:"title"`
@@ -41,36 +49,54 @@ func patchTask(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Неверный JSON"})
 	}
-	for i, t := range tasks {
-		if t.ID == id {
-			if req.Title != nil {
-				tasks[i].Title = *req.Title
-			}
-			if req.Status != nil {
-				tasks[i].Status = *req.Status
-			}
-			return c.JSON(http.StatusOK, tasks[i])
-		}
+	var task Task
+	if err := db.First(&task, "id = ?", id).Error; err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "Задача не найдена"})
 	}
-	return c.JSON(http.StatusNotFound, map[string]string{"error": "Задача не найдена"})
+
+	if req.Title != nil {
+		task.Title = *req.Title
+	}
+	if req.Status != nil {
+		task.Status = *req.Status
+	}
+
+	if err := db.Save(&task).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Не удалось обновить задачу"})
+	}
+
+	return c.JSON(http.StatusOK, task)
 }
 
 func deleteTask(c echo.Context) error {
 	id := c.Param("id")
-	for i, t := range tasks {
-		if t.ID == id {
-			tasks = append(tasks[:i], tasks[i+1:]...)
-			return c.String(http.StatusOK, "Задача удалена!")
-		}
+
+	var task Task
+	if err := db.First(&task, "id = ?", id).Error; err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "Задача не найдена"})
 	}
-	return c.JSON(http.StatusNotFound, map[string]string{"error": "Задача не найдена"})
+
+	if err := db.Delete(&task).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Ошибка при удалении задачи"})
+	}
+	return c.NoContent(http.StatusNoContent)
 }
 
 func main() {
 	e := echo.New()
-	e.GET("/task", getTask)
-	e.POST("/task", postTask)
-	e.PATCH("/task/:id", patchTask)
-	e.DELETE("/task/:id", deleteTask)
+
+	dsn := "host=localhost user=postgres password=postgres dbname=taskdb port=5435 sslmode=disable"
+	var err error
+	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatal("Ошибка подключения к БД:", err)
+	}
+
+	db.AutoMigrate(&Task{})
+
+	e.GET("/tasks", getTask)
+	e.POST("/tasks", postTask)
+	e.PATCH("/tasks/:id", patchTask)
+	e.DELETE("/tasks/:id", deleteTask)
 	e.Start(":8080")
 }
