@@ -9,15 +9,6 @@ import (
 	"net/http"
 )
 
-type Task struct {
-	ID        string         `json:"id" gorm:"primaryKey"`
-	Title     string         `json:"title"`
-	Status    string         `json:"status"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
-}
-
-var db *gorm.DB // глобальная переменная для доступа к БД
-
 func getTask(c echo.Context) error {
 	var taskList []Task
 	if err := db.Find(&taskList).Error; err != nil {
@@ -85,14 +76,7 @@ func deleteTask(c echo.Context) error {
 func main() {
 	e := echo.New()
 
-	dsn := "host=localhost user=postgres password=postgres dbname=taskdb port=5435 sslmode=disable"
-	var err error
-	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		log.Fatal("Ошибка подключения к БД:", err)
-	}
-
-	db.AutoMigrate(&Task{})
+	initDB()
 
 	e.GET("/tasks", getTask)
 	e.POST("/tasks", postTask)
