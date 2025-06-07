@@ -7,12 +7,9 @@ import (
 	"taskServer/internal/models"
 )
 
-var db *gorm.DB // глобальная переменная для доступа к БД
-
-func initDB() {
+func InitDB() *gorm.DB {
 	dsn := "host=localhost user=postgres password=postgres dbname=taskdb port=5435 sslmode=disable"
-	var err error
-	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Ошибка подключения к БД: %v", err)
 	}
@@ -20,5 +17,5 @@ func initDB() {
 	if err := db.AutoMigrate(&models.Task{}); err != nil {
 		log.Fatalf("Ошибка миграции: %v", err)
 	}
-
+	return db
 }
