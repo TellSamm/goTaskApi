@@ -1,4 +1,4 @@
-# Makefile для создания миграций
+# Makefile для создания миграций!
 
 # Переменные
 DB_DSN := "postgres://postgres:postgres@localhost:5435/taskdb?sslmode=disable"
