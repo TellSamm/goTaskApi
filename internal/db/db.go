@@ -4,7 +4,6 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
-	"taskServer/internal/models"
 )
 
 func InitDB() *gorm.DB {
@@ -12,10 +11,6 @@ func InitDB() *gorm.DB {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Ошибка подключения к БД: %v", err)
-	}
-
-	if err := db.AutoMigrate(&models.Task{}); err != nil {
-		log.Fatalf("Ошибка миграции: %v", err)
 	}
 	return db
 }
