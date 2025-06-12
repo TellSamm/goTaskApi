@@ -1,11 +1,11 @@
 package handlers
 
 import (
+	"context"
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
-	"net/http"
 	"taskServer/internal/models"
 	"taskServer/internal/taskService"
+	"taskServer/internal/web/tasks"
 )
 
 type TaskHandler struct {
@@ -16,75 +16,85 @@ func NewTaskHandler(service taskService.TaskService) *TaskHandler {
 	return &TaskHandler{service: service}
 }
 
-func (h *TaskHandler) CreateTask(c echo.Context) error {
-	var task models.Task
+func (h *TaskHandler) PostTasks(_ context.Context, req tasks.PostTasksRequestObject) (tasks.PostTasksResponseObject, error) {
+	taskReq := req.Body
 
-	if err := c.Bind(&task); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "неправильный JSON"})
+	newTask := models.Task{
+		ID:     uuid.New().String(),
+		Title:  taskReq.Title,
+		Status: taskReq.Status,
 	}
 
-	task.ID = uuid.New().String()
-
-	if err := h.service.CreateTask(&task); err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "не удалось создать задачу"})
+	if err := h.service.CreateTask(&newTask); err != nil {
+		return nil, err
 	}
 
-	return c.JSON(http.StatusCreated, task)
+	return tasks.PostTasks201JSONResponse{
+		Id:     newTask.ID,
+		Title:  newTask.Title,
+		Status: newTask.Status,
+	}, nil
 }
 
-func (h *TaskHandler) GetAllTasks(c echo.Context) error {
-	tasks, err := h.service.GetAllTasks()
+func (h *TaskHandler) GetTasks(_ context.Context, _ tasks.GetTasksRequestObject) (tasks.GetTasksResponseObject, error) {
+	allTasks, err := h.service.GetAllTasks()
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "не удалось получить список задач"})
+		return nil, err
 	}
-	return c.JSON(http.StatusOK, tasks)
+
+	var response tasks.GetTasks200JSONResponse
+	for _, t := range allTasks {
+		response = append(response, tasks.Task{
+			Id:     t.ID,
+			Title:  t.Title,
+			Status: t.Status,
+		})
+	}
+
+	return response, nil
 }
 
-func (h *TaskHandler) GetTaskByID(c echo.Context) error {
-	id := c.Param("id")
-
-	task, err := h.service.GetTaskByID(id)
+func (h *TaskHandler) GetTasksId(_ context.Context, req tasks.GetTasksIdRequestObject) (tasks.GetTasksIdResponseObject, error) {
+	task, err := h.service.GetTaskByID(req.Id)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "задача не найдена"})
+		return tasks.GetTasksId404Response{}, nil
 	}
-	return c.JSON(http.StatusOK, task)
+
+	return tasks.GetTasksId200JSONResponse{
+		Id:     task.ID,
+		Title:  task.Title,
+		Status: task.Status,
+	}, nil
 }
 
-func (h *TaskHandler) UpdateTask(c echo.Context) error {
-	id := c.Param("id")
-
-	var req struct {
-		Title  *string `json:"title"`
-		Status *string `json:"status"`
-	}
-	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "неверный JSON"})
-	}
-
-	task, err := h.service.GetTaskByID(id)
+func (h *TaskHandler) PatchTasksId(_ context.Context, req tasks.PatchTasksIdRequestObject) (tasks.PatchTasksIdResponseObject, error) {
+	task, err := h.service.GetTaskByID(req.Id)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "задача не найдена"})
+		return tasks.PatchTasksId404Response{}, nil
 	}
 
-	if req.Title != nil {
-		task.Title = *req.Title
+	if req.Body.Title != nil {
+		task.Title = *req.Body.Title
 	}
-	if req.Status != nil {
-		task.Status = *req.Status
+	if req.Body.Status != nil {
+		task.Status = *req.Body.Status
 	}
+
 	if err := h.service.UpdateTask(task); err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "не удалось обновить задачу"})
+		return nil, err
 	}
 
-	return c.JSON(http.StatusOK, task)
+	return tasks.PatchTasksId200JSONResponse{
+		Id:     task.ID,
+		Title:  task.Title,
+		Status: task.Status,
+	}, nil
 }
 
-func (h *TaskHandler) DeleteTask(c echo.Context) error {
-	id := c.Param("id")
-
-	err := h.service.DeleteTaskByID(id)
+func (h *TaskHandler) DeleteTasksId(_ context.Context, req tasks.DeleteTasksIdRequestObject) (tasks.DeleteTasksIdResponseObject, error) {
+	err := h.service.DeleteTaskByID(req.Id)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "задача не найдена"})
+		return tasks.DeleteTasksId404Response{}, nil
 	}
-	return c.NoContent(http.StatusNoContent)
+	return tasks.DeleteTasksId204Response{}, nil
 }

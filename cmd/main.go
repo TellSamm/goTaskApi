@@ -5,6 +5,7 @@ import (
 	"taskServer/internal/db"
 	"taskServer/internal/handlers"
 	"taskServer/internal/taskService"
+	"taskServer/internal/web/tasks"
 )
 
 func main() {
@@ -17,10 +18,8 @@ func main() {
 
 	e := echo.New()
 
-	e.GET("/tasks", handler.GetAllTasks)
-	e.POST("/tasks", handler.CreateTask)
-	e.GET("/tasks/:id", handler.GetTaskByID)
-	e.PATCH("/tasks/:id", handler.UpdateTask)
-	e.DELETE("/tasks/:id", handler.DeleteTask)
+	strictHandler := tasks.NewStrictHandler(handler, nil)
+	tasks.RegisterHandlers(e, strictHandler)
+
 	e.Start(":8080")
 }
