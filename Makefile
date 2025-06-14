@@ -8,6 +8,10 @@ MIGRATE := migrate -path ./migrations -database $(DB_DSN)
 migrate-new:
 	migrate create -ext sql -dir ./migrations $(NAME)
 
+# Линтер анализатор кодовой базы
+lint:
+	golangci-lint run --out-format=colored-line-number
+
 # Применение миграций
 migrate:
 	$(MIGRATE) up

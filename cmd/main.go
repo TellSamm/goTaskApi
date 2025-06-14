@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/labstack/echo/v4"
+	"log"
 	"taskServer/internal/db"
 	"taskServer/internal/handlers"
 	"taskServer/internal/taskService"
@@ -21,5 +22,7 @@ func main() {
 	strictHandler := tasks.NewStrictHandler(handler, nil)
 	tasks.RegisterHandlers(e, strictHandler)
 
-	e.Start(":8080")
+	if err := e.Start(":8080"); err != nil {
+		log.Fatal(err)
+	}
 }
