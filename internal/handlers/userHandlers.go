@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"taskServer/internal/models"
@@ -41,6 +42,7 @@ func (h *UserHandler) PostUsers(ctx context.Context, req users.PostUsersRequestO
 	}
 
 	newUser := &models.User{
+		ID:       uuid.New().String(),
 		Email:    req.Body.Email,
 		Password: req.Body.Password,
 	}
