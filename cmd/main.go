@@ -6,22 +6,34 @@ import (
 	"taskServer/internal/db"
 	"taskServer/internal/handlers"
 	"taskServer/internal/taskService"
+	"taskServer/internal/userService"
 	"taskServer/internal/web/tasks"
+	"taskServer/internal/web/users"
 )
 
 func main() {
 
 	database := db.InitDB()
-
-	repo := taskService.NewTaskRepository(database)
-	service := taskService.NewTaskService(repo)
-	handler := handlers.NewTaskHandler(service)
-
 	e := echo.New()
 
-	strictHandler := tasks.NewStrictHandler(handler, nil)
-	tasks.RegisterHandlers(e, strictHandler)
+	// Task block
+	taskRepo := taskService.NewTaskRepository(database)
+	taskSvc := taskService.NewTaskService(taskRepo)
+	taskHandler := handlers.NewTaskHandler(taskSvc)
 
+	// User block
+	userRepo := userService.NewUserRepository(database)
+	userSvc := userService.NewUSerService(userRepo)
+	userHandler := handlers.NewUserHandler(userSvc)
+
+	// Register handlers
+	taskStrictHandler := tasks.NewStrictHandler(taskHandler, nil)
+	tasks.RegisterHandlers(e, taskStrictHandler)
+
+	userStrictHandler := users.NewStrictHandler(userHandler, nil)
+	users.RegisterHandlers(e, userStrictHandler)
+
+	// Run server
 	if err := e.Start(":8080"); err != nil {
 		log.Fatal(err)
 	}

@@ -24,6 +24,11 @@ migrate-down:
 run:
 	go run cmd/main.go
 
-# Генерация кода из OpenAPI-файла
-gen:
+# Генерация кода из OpenAPI-файла для tasks
+gen-tasks:
 	oapi-codegen -config openapi/.openapi -include-tags tasks -package tasks openapi/openapi.yaml > ./internal/web/tasks/api.gen.go
+
+
+# Генерация кода из OpenAPI-файла для users
+gen-users:
+	oapi-codegen -config openapi/.openapi -include-tags users -package users openapi/openapi.yaml > ./internal/web/users/api.gen.go

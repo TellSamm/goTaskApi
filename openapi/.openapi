@@ -3,3 +3,5 @@ generate:
   strict-server: true
   echo-server: true
   models: true
+output-options:
+  skip-prune: true
