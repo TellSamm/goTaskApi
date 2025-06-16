@@ -1,6 +1,10 @@
 package taskService
 
-import "taskServer/internal/models"
+import (
+	"errors"
+	"github.com/google/uuid"
+	"taskServer/internal/models"
+)
 
 type TaskService interface {
 	CreateTask(task *models.Task) error
@@ -19,6 +23,9 @@ func NewTaskService(repo TaskRepository) TaskService {
 }
 
 func (s *taskService) CreateTask(task *models.Task) error {
+	if task.UserID == uuid.Nil {
+		return errors.New("user_id is required")
+	}
 	return s.repo.CreateTask(task)
 }
 

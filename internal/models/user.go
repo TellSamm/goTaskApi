@@ -1,15 +1,15 @@
 package models
 
 import (
-	"gorm.io/gorm"
+	"github.com/google/uuid"
 	"time"
 )
 
 type User struct {
-	ID        string         `json:"id" gorm:"primaryKey"`
-	Email     string         `json:"email"`
-	Password  string         `json:"password"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+	ID        uuid.UUID `json:"id" gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	Email     string    `json:"email"`
+	Password  string    `json:"password"`
+	Tasks     []Task    `json:"tasks" gorm:"foreignKey:UserID"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }

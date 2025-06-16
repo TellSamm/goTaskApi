@@ -16,15 +16,15 @@ func main() {
 	database := db.InitDB()
 	e := echo.New()
 
-	// Task block
-	taskRepo := taskService.NewTaskRepository(database)
-	taskSvc := taskService.NewTaskService(taskRepo)
-	taskHandler := handlers.NewTaskHandler(taskSvc)
-
 	// User block
 	userRepo := userService.NewUserRepository(database)
 	userSvc := userService.NewUSerService(userRepo)
 	userHandler := handlers.NewUserHandler(userSvc)
+
+	// Task block
+	taskRepo := taskService.NewTaskRepository(database)
+	taskSvc := taskService.NewTaskService(taskRepo)
+	taskHandler := handlers.NewTaskHandler(taskSvc, userSvc)
 
 	// Register handlers
 	taskStrictHandler := tasks.NewStrictHandler(taskHandler, nil)

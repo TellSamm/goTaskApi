@@ -1,6 +1,9 @@
 package userService
 
-import "taskServer/internal/models"
+import (
+	"github.com/google/uuid"
+	"taskServer/internal/models"
+)
 
 type UserService interface {
 	CreateUser(user *models.User) error
@@ -8,6 +11,7 @@ type UserService interface {
 	GetUserByID(id string) (*models.User, error)
 	UpdateUser(user *models.User) error
 	DeleteUserByID(id string) error
+	GetTasksForUser(userID string) ([]models.Task, error)
 }
 
 type userService struct {
@@ -24,6 +28,14 @@ func (s *userService) CreateUser(user *models.User) error {
 
 func (s *userService) GetAllUsers() ([]models.User, error) {
 	return s.repo.GetAllUsers()
+}
+
+func (s *userService) GetTasksForUser(userID string) ([]models.Task, error) {
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, err
+	}
+	return s.repo.GetTasksByUserID(uid)
 }
 
 func (s *userService) GetUserByID(id string) (*models.User, error) {

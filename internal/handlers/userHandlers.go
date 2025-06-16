@@ -26,7 +26,7 @@ func (h *UserHandler) GetUsers(ctx context.Context, _ users.GetUsersRequestObjec
 	var response users.GetUsers200JSONResponse
 	for _, u := range userList {
 		response = append(response, users.User{
-			Id:        u.ID,
+			Id:        u.ID.String(),
 			Email:     u.Email,
 			Password:  u.Password,
 			CreatedAt: &u.CreatedAt,
@@ -42,7 +42,7 @@ func (h *UserHandler) PostUsers(ctx context.Context, req users.PostUsersRequestO
 	}
 
 	newUser := &models.User{
-		ID:       uuid.New().String(),
+		ID:       uuid.New(),
 		Email:    req.Body.Email,
 		Password: req.Body.Password,
 	}
@@ -53,7 +53,7 @@ func (h *UserHandler) PostUsers(ctx context.Context, req users.PostUsersRequestO
 	}
 
 	response := users.PostUsers201JSONResponse{
-		Id:        newUser.ID,
+		Id:        newUser.ID.String(),
 		Email:     newUser.Email,
 		Password:  newUser.Password,
 		CreatedAt: &newUser.CreatedAt,
@@ -83,7 +83,7 @@ func (h *UserHandler) PatchUsersId(ctx context.Context, req users.PatchUsersIdRe
 	}
 
 	response := users.PatchUsersId200JSONResponse{
-		Id:        user.ID,
+		Id:        user.ID.String(),
 		Email:     user.Email,
 		Password:  user.Password,
 		CreatedAt: &user.CreatedAt,
